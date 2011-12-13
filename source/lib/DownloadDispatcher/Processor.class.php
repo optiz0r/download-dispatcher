@@ -23,7 +23,7 @@ class DownloadDispatcher_Processor {
                     $plugin = DownloadDispatcher_Sync_PluginFactory::create($plugin_name, $config, $log, $instance);
                     $plugin->run();
                 
-                } catch(SihnonFramework_Exception_LogException $e) {
+                } catch(SihnonFramework_Exception_PluginException $e) {
                     SihnonFramework_LogEntry::warning($log, $e->getMessage());
                 }
             }
@@ -31,13 +31,14 @@ class DownloadDispatcher_Processor {
         
         // Find the list of available source plugins
         DownloadDispatcher_Source_PluginFactory::scan();
-        $source_plugins = DownloadDispatcher_Source_PluginFactory::getValidPlugins();
-        
-        $enabled_plugins = $config->get('sources');
+        $source_plugins = $config->get('sources');
         foreach ($source_plugins as $plugin_name) {
-            if (in_array($plugin_name, $enabled_plugins)) {
+            try {
                 $plugin = DownloadDispatcher_Source_PluginFactory::create($plugin_name, $config, $log);
                 $plugin->run();
+                
+            } catch(DownloadDispatcher_Exception_PluginException $e) {
+                SihnonFramework_LogEntry::warning($log, $e->getMessage());
             }
         }
     }
