@@ -1,6 +1,6 @@
 <?php
 
-class DownloadDispatcher_Source_Plugin_RouterboardFirmware extends DownloadDispatcher_PluginBase implements DownloadDispatcher_Source_IPlugin {
+class DownloadDispatcher_Source_Plugin_RouterboardFirmware extends DownloadDispatcher_Source_PluginBase implements DownloadDispatcher_Source_IPlugin {
     
     /**
      * Name of this plugin

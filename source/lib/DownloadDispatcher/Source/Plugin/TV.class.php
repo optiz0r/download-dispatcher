@@ -1,6 +1,6 @@
 <?php
 
-class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_PluginBase implements DownloadDispatcher_Source_IPlugin {
+class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_PluginBase implements DownloadDispatcher_Source_IPlugin {
     
     /**
      * Name of this plugin
@@ -28,20 +28,27 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_PluginBase 
         $source_dirs = $this->config->get('sources.TV.input-directories');
         foreach ($source_dirs as $dir) {
             if (is_dir($dir) && is_readable($dir)) {
-                $this->process_dir($dir);
+                $iterator = new DownloadDispatcher_Utility_MediaFilesIterator(new DownloadDispatcher_Utility_VisibleFilesIterator(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir))));
+                foreach ($iterator as /** @var SplFileInfo */ $file) {
+                    $this->process_matched_file($file->getPath(), $file->getFilename());
+                }
             } else {
                 DownloadDispatcher_LogEntry::warning($this->log, "TV input directory '{$dir}' does not exist or cannot be read.");
             }
         }
     }
-    
-    protected function process_dir($dir) {
-        // TODO - Iterate over the contents of the directory, process files and recurse deeper
-    }
-    
+        
     protected function process_matched_file($dir, $file) {
         // TODO - Handle movement of the matched file to the correct output directory
         //      Handle direct media files, and also RAR archives
+        DownloadDispatcher_LogEntry::debug($this->log, "Media file: {$file}");
+                
+        // Check to see if this file has been handled previously
+        if ($this->check_processed($dir . '/' . $file)) {
+            DownloadDispatcher_LogEntry::debug($this->log, "Skipping previously seen file");
+            return;
+        }
+        
     }
     
     protected function identify_output_dir($dir, $file) {
@@ -56,11 +63,6 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_PluginBase 
     
     protected function rename_output($dir, $file) {
         // TODO - use tvrenamer to update the filenames
-    }
-    
-    protected function mark_processed($dir, $file) {
-        // TODO - Update the cache to show that a file has already been handled
-        // TODO - Upstream caching
     }
     
 }
