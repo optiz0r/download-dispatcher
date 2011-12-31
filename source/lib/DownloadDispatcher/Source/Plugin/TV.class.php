@@ -171,7 +171,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
                 $command = "/usr/bin/unrar e -p- -sm8192 -y {$source_dir}/{$source_file}";
                 DownloadDispatcher_LogEntry::debug($this->log, "Unrarring '{$source_file}' with command: {$command}");
                 
-                list($code, $output, $error) = DownloadDispatcher_ForegroundTask::execute($command, $destination_dir);
+                DownloadDispatcher_ForegroundTask::execute($command, $destination_dir);
             } break;
             
             case 'avi': {
@@ -180,7 +180,6 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
                 $command = "file {$safe_source_file}";
                 DownloadDispatcher_LogEntry::debug($this->log, "Verifying '{$source_file}' contents with command: {$command}");
                 list($code, $output, $error) = DownloadDispatcher_ForegroundTask::execute($command, $source_dir);
-                var_dump($code, $output, $error);
                 
                 if (preg_match('/Microsoft ASF/', $output)) {
                     DownloadDispatcher_LogEntry::warning($this->log, "Skipping '{$source_dir}/{$source_file}' due to dubious contents.");
@@ -214,8 +213,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
 EOSH;
 
         DownloadDispatcher_LogEntry::debug($this->log, "Executing tvrenamer command in '{$dir}': {$command}");
-        list($code, $output, $error) = DownloadDispatcher_ForegroundTask::execute($command, $dir);
-        var_dump($code, $output, $error);
+        DownloadDispatcher_ForegroundTask::execute($command, $dir);
     }
     
 }
