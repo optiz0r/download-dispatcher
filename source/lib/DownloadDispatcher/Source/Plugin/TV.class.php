@@ -61,8 +61,15 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             if ($this->noDuplicates($full_output_dir, $file)) {
                 if ($this->copyOutput($type, $dir, $file, $full_output_dir)) {
                     $this->renameOutput($full_output_dir);
+                } else {
+                    DownloadDispatcher_LogEntry::warning($this->log, "Failed to copy '{$file}' to the destination directory.");
                 }
+            } else {
+                DownloadDispatcher_LogEntry::info($this->log, "Skipping duplicate file '{$file}'.");
             }
+            
+            // This file has been dealt with, so no need to look at it in subsequent operations
+            $this->markProcessed($file);
         }
         
     }
