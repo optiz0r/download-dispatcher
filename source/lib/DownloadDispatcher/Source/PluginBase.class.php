@@ -15,7 +15,7 @@ class DownloadDispatcher_Source_PluginBase extends DownloadDispatcher_PluginBase
         
         if (is_null(static::$source_cache)) {
             try {
-                static::$source_cache = static::$cache->fetch(static::$source_cache_file, static::$cache_lifetime);
+                static::$source_cache = unserialize(static::$cache->fetch(static::$source_cache_file, static::$cache_lifetime));
             } catch (SihnonFramework_Exception_CacheObjectNotFound $e) {
                 static::$source_cache = array();
             }
@@ -33,7 +33,7 @@ class DownloadDispatcher_Source_PluginBase extends DownloadDispatcher_PluginBase
             static::$source_cache[get_called_class()][] = $file;
         }
         
-        static::$cache->store(static::$source_cache_file, static::$source_cache);
+        static::$cache->store(static::$source_cache_file, serialize(static::$source_cache));
     }
     
     protected function checkProcessed($file) {
