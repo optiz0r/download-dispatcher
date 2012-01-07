@@ -175,10 +175,15 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             case 'rar': {
                 DownloadDispatcher_LogEntry::info($this->log, "Unrarring '{$source_file}' into '{$destination_dir}'.");
                 
-                $command = "/usr/bin/unrar e -p- -sm8192 -y {$source_dir}/{$source_file}";
+                $safe_source_file = escapeshellarg("{$source_dir}/{$source_file}");
+                $command = "/usr/bin/unrar e -p- -sm8192 -y {$safe_source_file}";
                 DownloadDispatcher_LogEntry::debug($this->log, "Unrarring '{$source_file}' with command: {$command}");
                 
-                DownloadDispatcher_ForegroundTask::execute($command, $destination_dir);
+                list ($code,$output,$error) = DownloadDispatcher_ForegroundTask::execute($command, $destination_dir);
+                if ($code != 0) {
+                    DownloadDispatcher_LogEntry::warning($this->log, "Failed to unrar '{$source_dir}/{$source_file}'.");
+                    return false;
+                }
             } break;
             
             case 'avi': {
@@ -187,6 +192,10 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
                 $command = "file {$safe_source_file}";
                 DownloadDispatcher_LogEntry::debug($this->log, "Verifying '{$source_file}' contents with command: {$command}");
                 list($code, $output, $error) = DownloadDispatcher_ForegroundTask::execute($command, $source_dir);
+                if ($code != 0) {
+                    DownloadDispatcher_LogEntry::warning($this->log, "Failed to determine contents of '{$source_dir}/{$source_file}'.");
+                    return false;
+                }
                 
                 if (preg_match('/Microsoft ASF/', $output)) {
                     DownloadDispatcher_LogEntry::warning($this->log, "Skipping '{$source_dir}/{$source_file}' due to dubious contents.");
@@ -196,7 +205,11 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             } // continue into the next case
             default: {
                 DownloadDispatcher_LogEntry::info($this->log, "Copying '{$source_file}' to '{$destination_dir}'.");
-                copy("{$source_dir}/${source_file}", "{$destination_dir}/{$source_file}");
+                $result = copy("{$source_dir}/${source_file}", "{$destination_dir}/{$source_file}");
+                if ( ! $result) {
+                    DownloadDispatcher_LogEntry::warning($this->log, "Failed to copy '{$source_dir}/{$source_file}' to output directory '{$destination_dir}'.");
+                    return false;
+                }
             }
         }
         
