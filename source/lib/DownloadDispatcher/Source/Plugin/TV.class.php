@@ -110,7 +110,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
     }
     
     protected function normalise($name) {
-        if (preg_match('/(.*?)([\s\.]us)?([\s\.]+(19|20)\d{2})?[\s\.]+(\d+x\d+|s\d+e\d+|\d{3}).*/i', $name, $matches)) {
+        if (preg_match('/(.*?)([\s\.]us)?([\s\.]+(19|20)\d{2})?[\s\.]+(\d+x\d+|s\d+e\d+|\d{3,4}).*/i', $name, $matches)) {
             $name = $matches[1];
         }
         
