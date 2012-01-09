@@ -91,7 +91,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             }
         }
         
-        DownloadDispatcher_LogEntry::warning($this->log, "TV output directory for '{$file}' could not be identified; you may need to create one.");
+        DownloadDispatcher_LogEntry::warning($this->log, "TV output directory for '{$file}' ({$normalised_file}) could not be identified; you may need to create one.");
         return null;
     }
     
@@ -106,7 +106,6 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             $normalised_series = $this->normalise($series_name);
             $this->output_dir_cache[$normalised_series] = $series_name;
         }
-        
     }
     
     protected function normalise($name) {
@@ -126,7 +125,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         $set_season = function($a) {
             for ($i = 1, $l = count($a); $i < $l; ++$i) {
                 if ($a[$i]) {
-                    return trim($a[$i], '0');
+                    return ltrim($a[$i], '0');
                 }
             }
             return null;
@@ -143,7 +142,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         $set_episode = function($a) {
             for ($i = 1, $l = count($a); $i < $l; ++$i) {
                 if ($a[$i]) {
-                    return trim($a[$i], '0');
+                    return ltrim($a[$i], '0');
                 }
             }
             return null;
