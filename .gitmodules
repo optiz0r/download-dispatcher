@@ -1,0 +1,3 @@
+[submodule "source/3rdparty/tvrenamer"]
+	path = source/3rdparty/tvrenamer
+	url = https://github.com/meermanr/TVSeriesRenamer.git
