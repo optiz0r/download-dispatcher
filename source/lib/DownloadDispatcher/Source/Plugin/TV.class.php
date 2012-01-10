@@ -48,30 +48,46 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
     protected function processMatchedFile($dir, $file, $type) {
         // TODO - Handle movement of the matched file to the correct output directory
         //      Handle direct media files, and also RAR archives
-        DownloadDispatcher_LogEntry::debug($this->log, "Media file: {$file}");
-                
-        // Check to see if this file has been handled previously
-        if ($this->checkProcessed($dir . '/' . $file)) {
-            DownloadDispatcher_LogEntry::debug($this->log, "Skipping previously seen file");
-            return;
-        }
+        DownloadDispatcher_LogEntry::debug($this->log, "Media file: '{$file}'.");
         
-        $full_output_dir = $this->identifyOutputDir($dir, $file);
-        if ($full_output_dir) {
-            if ($this->noDuplicates($full_output_dir, $file)) {
-                if ($this->copyOutput($type, $dir, $file, $full_output_dir)) {
-                    $this->renameOutput($full_output_dir);
-                } else {
-                    DownloadDispatcher_LogEntry::warning($this->log, "Failed to copy '{$file}' to the destination directory.");
-                }
-            } else {
-                DownloadDispatcher_LogEntry::info($this->log, "Skipping duplicate file '{$file}'.");
+        try {
+                
+            // Check to see if this file has been handled previously
+            if ($this->checkProcessed($dir . '/' . $file)) {
+                throw new DownloadDispatcher_Exception_PreviouslySeenContent($file);
             }
             
+            $full_output_dir = $this->identifyOutputDir($dir, $file);
+            
+            $this->checkDuplicates($full_output_dir, $file);
+            
+            $this->copyOutput($type, $dir, $file, $full_output_dir);
+            
+            $this->renameOutput($full_output_dir);
+        
             // This file has been dealt with, so no need to look at it in subsequent operations
             $this->markProcessed($file);
+            
+        } catch (DownloadDispatcher_Exception_PreviouslySeenContent $e) {
+            DownloadDispatcher_LogEntry::debug($this->log, "Skipping previously seen file '{$e->getMessage()}'.");
+                        
+        } catch (DownloadDispatcher_Exception_UnidentifiedContent $e) {
+            DownloadDispatcher_LogEntry::warning($this->log, "TV output directory for '{$e->getMessage()}' could not be identified; you may need to create one.");
+            
+        } catch (DownloadDispatcher_Exception_UnacceptableContent $e) {
+            DownloadDispatcher_LogEntry::warning($this->log, "Skipping '{$e->getMessage()}' due to dubious contents.");
+            
+            // Forget the download upstream so a new copy can be fetched
+            $file = $e->getMessage();
+            $this->forgetDownload($this->normalise($file), $this->season($file), $this->episode($file));
+            
+        } catch (DownloadDispatcher_Exception_DuplicateContent $e) {
+            DownloadDispatcher_LogEntry::info($this->log, "Skipping duplicate file '{$e->getMessage()}'.");
+            
+        } catch (DownloadDispatcher_Exception_UnprocesseableContent $e) {
+            DownloadDispatcher_LogEntry::warning($this->log, "Failed to copy '{$e->getMessage()}' to the destination directory.");
+            
         }
-        
     }
     
     protected function identifyOutputDir($dir, $file) {
@@ -91,8 +107,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             }
         }
         
-        DownloadDispatcher_LogEntry::warning($this->log, "TV output directory for '{$file}' could not be identified; you may need to create one.");
-        return null;
+        throw new DownloadDispatcher_Exception_UnidentifiedContent($file);
     }
     
     protected function scanOutputDir() {
@@ -156,18 +171,16 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         }
     }
     
-    protected function noDuplicates($dir, $file) {
+    protected function checkDuplicates($dir, $file) {
         $episode = $this->episode($file);
         
         $iterator = new DownloadDispatcher_Utility_MediaFilesIterator(new DownloadDispatcher_Utility_VisibleFilesIterator(new DirectoryIterator($dir)));
         foreach ($iterator as /** @var SplFileInfo */ $existing_file) {
             $existing_episode = $this->episode($existing_file->getFilename());
             if ($existing_episode == $episode) {
-                return false;
+                throw new DownloadDispatcher_Exception_DuplicateContent($file);
             }
         }
-        
-        return true;
     }
     
     protected function copyOutput($type, $source_dir, $source_file, $destination_dir) {
@@ -180,9 +193,11 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
                 DownloadDispatcher_LogEntry::debug($this->log, "Unrarring '{$source_file}' with command: {$command}");
                 
                 list ($code,$output,$error) = DownloadDispatcher_ForegroundTask::execute($command, $destination_dir);
-                if ($code != 0) {
+                if ($code == 3) {
+                    throw new DownloadDispatcher_Exception_UnacceptableContent($source_file);
+                } else if ($code != 0) {
                     DownloadDispatcher_LogEntry::warning($this->log, "Failed to unrar '{$source_dir}/{$source_file}'.");
-                    return false;
+                    throw new DownloadDispatcher_Exception_UnprocesseableContent($source_file);
                 }
             } break;
             
@@ -194,21 +209,20 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
                 list($code, $output, $error) = DownloadDispatcher_ForegroundTask::execute($command, $source_dir);
                 if ($code != 0) {
                     DownloadDispatcher_LogEntry::warning($this->log, "Failed to determine contents of '{$source_dir}/{$source_file}'.");
-                    return false;
+                    throw new DownloadDispatcher_Exception_UnprocesseableContent($source_file);
                 }
                 
                 if (preg_match('/Microsoft ASF/', $output)) {
-                    DownloadDispatcher_LogEntry::warning($this->log, "Skipping '{$source_dir}/{$source_file}' due to dubious contents.");
-                    return false;
+                    throw new DownloadDispatcher_Exception_UnacceptableContent($source_file);
                 }
                 
             } // continue into the next case
             default: {
                 DownloadDispatcher_LogEntry::info($this->log, "Copying '{$source_file}' to '{$destination_dir}'.");
-                $result = copy("{$source_dir}/${source_file}", "{$destination_dir}/{$source_file}");
+                $result = copy("{$source_dir}/{$source_file}", "{$destination_dir}/{$source_file}");
                 if ( ! $result) {
                     DownloadDispatcher_LogEntry::warning($this->log, "Failed to copy '{$source_dir}/{$source_file}' to output directory '{$destination_dir}'.");
-                    return false;
+                    throw new DownloadDispatcher_Exception_UnprocesseableContent($source_file);
                 }
             }
         }
@@ -234,6 +248,35 @@ EOSH;
 
         DownloadDispatcher_LogEntry::debug($this->log, "Executing tvrenamer command in '{$dir}': {$command}");
         DownloadDispatcher_ForegroundTask::execute($command, $dir);
+    }
+    
+    protected function forgetDownload($series, $season, $episode) {
+        $base_url  = $this->config->get('sources.TV.flexget-url');
+        $username = $this->config->get('sources.TV.flexget-username');
+        $password = $this->config->get('sources.TV.flexget-password');
+
+        $url = "{$base_url}execute/";
+        $data = array(
+            'options' => "--series-forget '{$series}' 's{$season}e{$episode}'",
+            'submit' => 'Start Execution',
+        );
+        
+        DownloadDispatcher_LogEntry::debug($this->log, "Sending flexget series-forget command to {$url} with options '{$data['options']}'.");
+        
+        $request = new HttpRequest($url, HTTP_METH_POST, array(
+            'httpauth' => "{$username}:{$password}",
+            'httpauthtype' => HTTP_AUTH_BASIC,
+        ));
+        $request->setPostFields($data);
+        
+        $response = $request->send();
+        DownloadDispatcher_LogEntry::debug($this->log, "Response code: {$response->getResponseCode()}.");
+        
+        if ($response->getResponseCode() == 200) {
+            DownloadDispatcher_LogEntry::info($this->log, "Successfully made flexget forget about {$series} s{$season}e{$episode}.");
+        } else {
+            DownloadDispatcher_LogEntry::warning($this->log, "Failed to make flexget forget about {$series} s{$season}e{$episode}.");
+        }
     }
     
 }
