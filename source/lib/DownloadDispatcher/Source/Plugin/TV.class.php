@@ -121,7 +121,6 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             $normalised_series = $this->normalise($series_name);
             $this->output_dir_cache[$normalised_series] = $series_name;
         }
-        
     }
     
     protected function normalise($name) {
@@ -141,7 +140,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         $set_season = function($a) {
             for ($i = 1, $l = count($a); $i < $l; ++$i) {
                 if ($a[$i]) {
-                    return trim($a[$i], '0');
+                    return ltrim($a[$i], '0');
                 }
             }
             return null;
@@ -158,7 +157,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         $set_episode = function($a) {
             for ($i = 1, $l = count($a); $i < $l; ++$i) {
                 if ($a[$i]) {
-                    return trim($a[$i], '0');
+                    return ltrim($a[$i], '0');
                 }
             }
             return null;
