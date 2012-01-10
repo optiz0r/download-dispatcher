@@ -13,6 +13,7 @@ class DownloadDispatcher_Sync_Plugin_Rsync extends DownloadDispatcher_PluginBase
     protected $log;
     
     protected $instance;
+    protected $enabled;
     protected $options;
     protected $source;
     protected $destination;
@@ -26,12 +27,17 @@ class DownloadDispatcher_Sync_Plugin_Rsync extends DownloadDispatcher_PluginBase
         $this->log = $log;
         $this->instance = $instance;
         
+        $this->enabled = $this->config->get("sync.Rsync.{$this->instance}.enabled", true);
         $this->options = $this->config->get("sync.Rsync.{$this->instance}.options");
         $this->source = $this->config->get("sync.Rsync.{$this->instance}.source");
         $this->destination = $this->config->get("sync.Rsync.{$this->instance}.destination");
     }
     
     public function run() {
+        if ( ! $this->enabled) {
+            return;
+        }
+        
         DownloadDispatcher_LogEntry::debug($this->log, "Running Rsync synchroniser: '{$this->instance}'");
         
         $command = "/usr/bin/rsync {$this->options} '{$this->source}' '{$this->destination}'";
