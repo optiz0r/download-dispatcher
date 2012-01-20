@@ -122,6 +122,9 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             $normalised_series = $this->normalise($series_name);
             $this->output_dir_cache[$normalised_series] = $series_name;
         }
+        
+        // Post-process in any manual directory mappings
+        $this->output_dir_cache = array_merge($this->output_dir_cache, $this->config->get('sources.TV.output_series_mappings'), array());
     }
     
     protected function normalise($name) {
