@@ -257,6 +257,10 @@ EOSH;
         $base_url  = $this->config->get('sources.TV.flexget-url');
         $username = $this->config->get('sources.TV.flexget-username');
         $password = $this->config->get('sources.TV.flexget-password');
+        
+        // Pad series and episode numbers with leading zeroes for flexget
+        $season = str_pad($season, 2, '0', STR_PAD_LEFT);
+        $episode = str_pad($episode, 2, '0', STR_PAD_LEFT);
 
         $url = "{$base_url}execute/";
         $data = array(
@@ -276,9 +280,14 @@ EOSH;
         DownloadDispatcher_LogEntry::debug($this->log, "Response code: {$response->getResponseCode()}.");
         
         if ($response->getResponseCode() == 200) {
-            DownloadDispatcher_LogEntry::info($this->log, "Successfully made flexget forget about {$series} s{$season}e{$episode}.");
+            $response_data = $response->getResponseData();
+            if (preg_match('/Removed episode .* from series .*/', $response_data['body'])) {
+                DownloadDispatcher_LogEntry::info($this->log, "Successfully made flexget forget about {$series} s{$season}e{$episode}.");
+            } else {
+                DownloadDispatcher_LogEntry::warning($this->log, "Failed to make flexget forget about {$series} s{$season}e{$episode}.");
+            }
         } else {
-            DownloadDispatcher_LogEntry::warning($this->log, "Failed to make flexget forget about {$series} s{$season}e{$episode}.");
+            DownloadDispatcher_LogEntry::warning($this->log, "Failed to communicate with flexget webui.");
         }
     }
     
