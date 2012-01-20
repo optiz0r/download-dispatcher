@@ -66,7 +66,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             $this->renameOutput($full_output_dir);
         
             // This file has been dealt with, so no need to look at it in subsequent operations
-            $this->markProcessed($file);
+            $this->markProcessed($dir . '/' . $file);
             
         } catch (DownloadDispatcher_Exception_PreviouslySeenContent $e) {
             DownloadDispatcher_LogEntry::debug($this->log, "Skipping previously seen file '{$e->getMessage()}'.");
@@ -80,6 +80,9 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             // Forget the download upstream so a new copy can be fetched
             $file = $e->getMessage();
             $this->forgetDownload($this->normalise($file), $this->season($file), $this->episode($file));
+            
+            // Mark this file as processed so that its not rechecked on every invocation
+            $this->markProcessed($dir . '/' . $file);
             
         } catch (DownloadDispatcher_Exception_DuplicateContent $e) {
             DownloadDispatcher_LogEntry::info($this->log, "Skipping duplicate file '{$e->getMessage()}'.");
