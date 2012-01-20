@@ -46,8 +46,6 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
     }
         
     protected function processMatchedFile($dir, $file, $type) {
-        // TODO - Handle movement of the matched file to the correct output directory
-        //      Handle direct media files, and also RAR archives
         DownloadDispatcher_LogEntry::debug($this->log, "Media file: '{$file}'.");
         
         try {
