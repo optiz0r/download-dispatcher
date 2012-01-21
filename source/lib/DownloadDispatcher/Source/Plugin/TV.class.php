@@ -91,8 +91,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         }
     }
     
-    protected function identifyOutputDir($dir, $file) {
-        // TODO - Generate the correct output directory, apply any special case mappings, and ensure the destination exists
+    protected function identifyOutputDir($dir, $file, $try_parent = true) {
         if (is_null($this->output_dir_cache)) {
             $this->scanOutputDir();
         }
@@ -106,6 +105,11 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             if (is_dir($full_output_dir)) {
                 return $full_output_dir;
             }
+        }
+        
+        // Filename not recognised, try the parent directory name instead
+        if ($try_parent) {
+            return identifyOutputDir(dirname($dir), basename($dir), false);
         }
         
         throw new DownloadDispatcher_Exception_UnidentifiedContent($file);
