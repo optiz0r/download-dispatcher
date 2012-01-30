@@ -109,7 +109,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         
         // Filename not recognised, try the parent directory name instead
         if ($try_parent) {
-            return identifyOutputDir(dirname($dir), basename($dir), false);
+            return $this->identifyOutputDir(dirname($dir), basename($dir), false);
         }
         
         throw new DownloadDispatcher_Exception_UnidentifiedContent($file);
