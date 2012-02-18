@@ -286,8 +286,8 @@ EOSH;
         DownloadDispatcher_LogEntry::debug($this->log, "Response code: {$response->getResponseCode()}.");
         
         if ($response->getResponseCode() == 200) {
-            $response_data = $response->getResponseData();
-            if (preg_match('/Removed episode .* from series .*/', $response_data['body'])) {
+            $response_body = $response->getBody();
+            if (preg_match('/Removed episode .* from series .*/', $response_body)) {
                 DownloadDispatcher_LogEntry::info($this->log, "Successfully made flexget forget about {$series} s{$season}e{$episode}.");
             } else {
                 DownloadDispatcher_LogEntry::warning($this->log, "Failed to make flexget forget about {$series} s{$season}e{$episode}.");
