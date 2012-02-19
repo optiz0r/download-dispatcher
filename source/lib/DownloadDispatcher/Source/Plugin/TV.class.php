@@ -156,7 +156,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             return null;
         };
         
-        if (preg_match('/(\d+)x\d+|s(\d+)e\d+|(?:(?:19|20)\d{2}[\s\.]+)?(\d+)\d{2}/i', $name, $matches)) {
+        if (preg_match('/(\d+)\d{2}(?!\d|[\s\.](?:\d+x\d+|s\d+e\d+))|(\d+)x\d+|s(\d+)e\d+/i', $name, $matches)) {
             return $set_season($matches);
         } else {
             return 0;
@@ -173,7 +173,8 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             return null;
         };
         
-        if (preg_match('/\d+x(\d+)|s\d+e(\d+)|(?:(?:19|20)\d{2}[\s\.]+)?\d+(\d{2})/i', $name, $matches)) {
+#        if (preg_match('/\d+x(\d+)|s\d+e(\d+)|(?:(?:19|20)\d{2}[\s\.]+)?\d+(\d{2})/i', $name, $matches)) {
+        if (preg_match('/\d+(\d{2})(?!\d|[\s\.](?:\d+x\d+|s\d+e\d+))|\d+x(\d+)|s\d+e(\d+)/i', $name, $matches)) {
             return $set_episode($matches);
         } else {
             return 0;
