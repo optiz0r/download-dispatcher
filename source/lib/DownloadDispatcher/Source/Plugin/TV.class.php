@@ -161,7 +161,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             return null;
         };
         
-        if (preg_match('/(\d+)x\d+|s(\d+)e\d+|(?:(?:19|20)\d{2}[\s\.]+)?(\d+)\d{2}/i', $name, $matches)) {
+        if (preg_match('/(\d+)\d{2}(?!\d|[\s\.](?:\d+x\d+|s\d+ep?\d+))|(\d+)x\d+|s(\d+)e\d+/i', $name, $matches)) {
             return $set_season($matches);
         } else {
             return 0;
@@ -178,7 +178,8 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             return null;
         };
         
-        if (preg_match('/\d+x(\d+)|s\d+e(\d+)|(?:(?:19|20)\d{2}[\s\.]+)?\d+(\d{2})/i', $name, $matches)) {
+#        if (preg_match('/\d+x(\d+)|s\d+e(\d+)|(?:(?:19|20)\d{2}[\s\.]+)?\d+(\d{2})/i', $name, $matches)) {
+        if (preg_match('/\d+(\d{2})(?!\d|[\s\.](?:\d+x\d+|s\d+ep?\d+))|\d+x(\d+)|s\d+e(\d+)/i', $name, $matches)) {
             return $set_episode($matches);
         } else {
             return 0;
@@ -307,8 +308,8 @@ EOSH;
         DownloadDispatcher_LogEntry::debug($this->log, "Response code: {$response->getResponseCode()}.");
         
         if ($response->getResponseCode() == 200) {
-            $response_data = $response->getBody();
-            if (preg_match('/Removed episode .* from series .*/', $response_data)) {
+            $response_body = $response->getBody();
+            if (preg_match('/Removed episode .* from series .*/', $response_body)) {
                 DownloadDispatcher_LogEntry::info($this->log, "Successfully made flexget forget about {$series} s{$season}e{$episode}.");
             } else {
                 DownloadDispatcher_LogEntry::warning($this->log, "Failed to make flexget forget about {$series} s{$season}e{$episode}.");
