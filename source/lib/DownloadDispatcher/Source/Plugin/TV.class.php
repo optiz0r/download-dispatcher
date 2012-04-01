@@ -109,7 +109,12 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         
         // Filename not recognised, try the parent directory name instead
         if ($try_parent) {
-            return identifyOutputDir(dirname($dir), basename($dir), false);
+            try {
+                return $this->identifyOutputDir(dirname($dir), basename($dir), false);
+            } catch (DownloadDispatcher_Exception_UnidentifiedContent $e) {
+                // Rethrow the exception for the original file, not its parent directory
+                throw new DownloadDispatcher_Exception_UnidentifiedContent($file);
+            }
         }
         
         throw new DownloadDispatcher_Exception_UnidentifiedContent($file);
@@ -196,11 +201,27 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
                 DownloadDispatcher_LogEntry::info($this->log, "Unrarring '{$source_file}' into '{$destination_dir}'.");
                 
                 $safe_source_file = escapeshellarg("{$source_dir}/{$source_file}");
+                
+                $command = "/usr/bin/unrar lb -p- -sm8192 -y {$safe_source_file}";
+                DownloadDispatcher_LogEntry::debug($this->log, "Checking archive contents of '{$source_file}' with command: {$command}");
+                list ($code,$output,$error) = DownloadDispatcher_ForegroundTask::execute($command, $destination_dir);
+                $files = explode("\n", $output);
+                if (empty($files)) {
+                    DownloadDispatcher_LogEntry::warning($this->log, "Unacceptable content inside rar archive: {$source_dir}/{$source_file} ({$file}) (no files >8k)");
+                    throw new DownloadDispatcher_Exception_UnacceptableContent($source_file);
+                }
+                foreach ($files as $file) {
+                    if (preg_match('/\.(rar|wmv|avi)$/', $file)) {
+                        DownloadDispatcher_LogEntry::warning($this->log, "Unacceptable contents inside rar archive: {$source_dir}/{$source_file} ({$file})");
+                        throw new DownloadDispatcher_Exception_UnacceptableContent($source_file);
+                    }
+                }
+
                 $command = "/usr/bin/unrar e -p- -sm8192 -y {$safe_source_file}";
                 DownloadDispatcher_LogEntry::debug($this->log, "Unrarring '{$source_file}' with command: {$command}");
-                
                 list ($code,$output,$error) = DownloadDispatcher_ForegroundTask::execute($command, $destination_dir);
                 if ($code == 3) {
+                    DownloadDispatcher_LogEntry::warning($this->log, "Rejecting password-protected rar archive: {$source_dir}/{$source_file}");
                     throw new DownloadDispatcher_Exception_UnacceptableContent($source_file);
                 } else if ($code != 0) {
                     DownloadDispatcher_LogEntry::warning($this->log, "Failed to unrar '{$source_dir}/{$source_file}'.");
@@ -284,8 +305,8 @@ EOSH;
         DownloadDispatcher_LogEntry::debug($this->log, "Response code: {$response->getResponseCode()}.");
         
         if ($response->getResponseCode() == 200) {
-            $response_data = $response->getResponseData();
-            if (preg_match('/Removed episode .* from series .*/', $response_data['body'])) {
+            $response_data = $response->getBody();
+            if (preg_match('/Removed episode .* from series .*/', $response_data)) {
                 DownloadDispatcher_LogEntry::info($this->log, "Successfully made flexget forget about {$series} s{$season}e{$episode}.");
             } else {
                 DownloadDispatcher_LogEntry::warning($this->log, "Failed to make flexget forget about {$series} s{$season}e{$episode}.");
