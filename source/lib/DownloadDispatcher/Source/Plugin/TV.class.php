@@ -137,16 +137,18 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
     }
     
     protected function normalise($name) {
-        if (preg_match('/(.*?)([\s\.]us)?([\s\.]+(19|20)\d{2})?[\s\.]+(\d+x\d+|s\d+e\d+|\d{3,4}).*/i', $name, $matches)) {
-            $name = $matches[1];
+        $normalised_name = $name;
+        if (preg_match('/(?:\[ www.[a-zA-Z0-9.]+ \] - )?(.*?)([\s.]+us)?([\s\.](19|20)\d{2})?[\s\.](\d+x\d+|s\d+e\d+|\d{3,4}).*/i', $normalised_name, $matches)) {
+            $normalised_name = $matches[1];
         }
         
-        $name = preg_replace('/[^a-zA-Z0-9]/', ' ', $name);
-        $name = preg_replace('/ +/', ' ', $name);
-        $name = strtolower($name);
-        $name = trim($name);
+        $normalised_name = preg_replace('/[^a-zA-Z0-9]/', ' ', $normalised_name);
+        $normalised_name = preg_replace('/ +/', ' ', $normalised_name);
+        $normalised_name = strtolower($normalised_name);
+        $normalised_name = trim($normalised_name);
         
-        return $name;
+        DownloadDispatcher_LogEntry::debug($this->log, "Normalised '{$name}' to '{$normalised_name}'");
+        return $normalised_name;
     }
     
     protected function season($name) {
