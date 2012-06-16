@@ -99,6 +99,9 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         $normalised_file = $this->normalise($file);
         if (array_key_exists($normalised_file, $this->output_dir_cache)) {
             $season = $this->season($file);
+            if (!$season) {
+                $season = $this->season($dir);
+            }
             
             $full_output_dir = "{$this->output_dir}/{$this->output_dir_cache[$normalised_file]}/Season {$season}";
             
@@ -138,15 +141,16 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
     
     protected function normalise($name) {
         $normalised_name = $name;
-        if (preg_match('/(?:\[ www.[a-zA-Z0-9.]+ \] - )?(.*?)([\s.]+us)?([\s\.](19|20)\d{2})?[\s\.](\d+x\d+|s\d+e\d+|\d{3,4}).*/i', $normalised_name, $matches)) {
+        if (preg_match('/(?:\[ www.[a-zA-Z0-9.]+ \] - )?(.*?)([\s.]+us)?([\s\.](19|20)\d{2})?[\s\.](\d+x\d+|s\d+[.-_]?e\d+|\d{3,4}).*/i', $normalised_name, $matches)) {
             $normalised_name = $matches[1];
         }
         
         $normalised_name = preg_replace('/[^a-zA-Z0-9]/', ' ', $normalised_name);
         $normalised_name = preg_replace('/ +/', ' ', $normalised_name);
         $normalised_name = strtolower($normalised_name);
+        $normalised_name = preg_replace('/season \d+( complete)?/', '', $normalised_name);
         $normalised_name = trim($normalised_name);
-        
+
         DownloadDispatcher_LogEntry::debug($this->log, "Normalised '{$name}' to '{$normalised_name}'");
         return $normalised_name;
     }
@@ -161,7 +165,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             return null;
         };
         
-        if (preg_match('/(\d+)\d{2}(?!\d|[\s\.](?:\d+x\d+|s\d+ep?\d+))|(\d+)x\d+|s(\d+)e\d+/i', $name, $matches)) {
+        if (preg_match('/(\d+)\d{2}(?!\d|[\s\.](?:\d+x\d+|s\d[._-]?+ep?\d+))|(\d+)x\d+|s(\d+)e\d+|season (\d+)/i', $name, $matches)) {
             return $set_season($matches);
         } else {
             return 0;
@@ -178,22 +182,32 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             return null;
         };
         
-#        if (preg_match('/\d+x(\d+)|s\d+e(\d+)|(?:(?:19|20)\d{2}[\s\.]+)?\d+(\d{2})/i', $name, $matches)) {
-        if (preg_match('/\d+(\d{2})(?!\d|[\s\.](?:\d+x\d+|s\d+ep?\d+))|\d+x(\d+)|s\d+e(\d+)/i', $name, $matches)) {
+        if (preg_match('/\d+(\d{2})(?!\d|[\s\.](?:\d+x\d+|s\d[._-]?+ep?\d+))|\d+x(\d+)|s\d+e(\d+)|^(\d{1,2})/i', $name, $matches)) {
             return $set_episode($matches);
         } else {
             return 0;
         }
     }
+
+    protected function filetype($file) {
+        if (preg_match('/\.([^.]*)$/', $file, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
     
     protected function checkDuplicates($dir, $file) {
         $episode = $this->episode($file);
-        
-        $iterator = new DownloadDispatcher_Utility_MediaFilesIterator(new DownloadDispatcher_Utility_VisibleFilesIterator(new DirectoryIterator($dir)));
+
+        $iterator = new DownloadDispatcher_Utility_VideoFilesIterator(new DownloadDispatcher_Utility_VisibleFilesIterator(new DirectoryIterator($dir)));
         foreach ($iterator as /** @var SplFileInfo */ $existing_file) {
             $existing_episode = $this->episode($existing_file->getFilename());
             if ($existing_episode == $episode) {
-                throw new DownloadDispatcher_Exception_DuplicateContent($file);
+                // Only reject duplicates with the same extension, so we can keep meta data or high/low def copies
+                if ($this->filetype($file) == $this->filetype($existing_file->getFilename())) {
+                    throw new DownloadDispatcher_Exception_DuplicateContent($file);
+                }
             }
         }
     }
