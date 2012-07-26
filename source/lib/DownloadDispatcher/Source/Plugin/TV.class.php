@@ -165,7 +165,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             return null;
         };
         
-        if (preg_match('/(\d+)\d{2}(?!\d|[\s\.](?:\d+x\d+|s\d[._-]?+ep?\d+))|(\d+)x\d+|s(\d+)e\d+|season (\d+)/i', $name, $matches)) {
+        if (preg_match('/(\d+)\d{2}(?!\d|[\s\.](?:\d+x\d+|s\d+[._-]?ep?\d+))|(\d+)x\d+|s(\d+)e\d+|season (\d+)/i', $name, $matches)) {
             return $set_season($matches);
         } else {
             return 0;
