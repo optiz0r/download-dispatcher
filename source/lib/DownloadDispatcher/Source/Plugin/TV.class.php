@@ -204,8 +204,8 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         foreach ($iterator as /** @var SplFileInfo */ $existing_file) {
             $existing_episode = $this->episode($existing_file->getFilename());
             if ($existing_episode == $episode) {
-                // Only reject duplicates with the same extension, so we can keep meta data or high/low def copies
-                if ($this->filetype($file) == $this->filetype($existing_file->getFilename())) {
+                // Only reject duplicates for media files with the same extension, so we can keep meta data or high/low def copies
+                if (DownloadDispatcher_Utility_MediaFile::isArchivefile($file) || $this->filetype($file) == $this->filetype($existing_file->getFilename())) {
                     throw new DownloadDispatcher_Exception_DuplicateContent($file);
                 }
             }

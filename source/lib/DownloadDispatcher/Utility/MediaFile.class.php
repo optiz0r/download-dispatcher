@@ -14,6 +14,10 @@ class DownloadDispatcher_Utility_MediaFile {
         return preg_match('/(?<!(?:\.|-)sample)\.(srt|smi)$/i', $filename);
     }
 
+    public static function isArchiveFile($filename) {
+        return preg_match('/(?<!(?:\.|-)sample)\.(rar)$/i', $filename);
+    }
+
 }
 
 
