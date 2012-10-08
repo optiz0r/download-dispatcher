@@ -3,11 +3,11 @@
 class DownloadDispatcher_Utility_MediaFile {
 
     public static function isMediaFile($filename) {
-        return preg_match('/(?<!(?:\.|-)sample)\.(?:avi|ogm|m4v|mkv|mov|mp4|mpg|srt|smi|rar)$/i', $filename);
+        return preg_match('/(?<!(?:\.|-)sample)\.(?:avi|ogm|m4v|mkv|mov|mp4|mpg|ts|srt|smi|rar)$/i', $filename);
     }
 
     public static function isVideoFile($filename) {
-        return preg_match('/(?<!(?:\.|-)sample)\.(?:avi|ogm|m4v|mkv|mov|mp4|mpg)$/i', $filename);
+        return preg_match('/(?<!(?:\.|-)sample)\.(?:avi|ogm|m4v|mkv|mov|mp4|mpg|ts)$/i', $filename);
     }
 
     public static function isMetadataFile($filename) {
