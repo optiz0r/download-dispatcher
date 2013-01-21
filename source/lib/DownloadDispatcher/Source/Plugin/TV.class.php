@@ -141,7 +141,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
     
     protected function normalise($name) {
         $normalised_name = $name;
-        if (preg_match('/(?:\[ www.[a-zA-Z0-9.]+ \] - )?(.*?)([\s.]+us)?([\s\.](19|20)\d{2})?[\s\.](\d+x\d+|s(?:eason ?)?\d+[.-_ ]?e(?:pisode ?)?\d+|\d{3,4}).*/i', $normalised_name, $matches)) {
+        if (preg_match('/(?:\[ www.[a-zA-Z0-9.]+ \] - )?(.*?)([\s.]+us)?([\s\.](19|20)\d{2})?[\s\.](\[?\s*\d+x\d+\s*\]?|s(?:eason ?)?\d+[.-_ ]?e(?:pisode ?)?\d+|\d{3,4}).*/i', $normalised_name, $matches)) {
             $normalised_name = $matches[1];
         }
         
@@ -165,7 +165,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             return null;
         };
         
-        if (preg_match('/(\d+)\d{2}(?!\d|[\s\.](?:\d+x\d+|s\d+[._-]?ep?\d+))|(\d+)x\d+|s(?:season ?)?(\d+)e(?:pisode ?)?\d+|season (\d+)/i', $name, $matches)) {
+        if (preg_match('/(\d+)\d{2}(?!\d|[\s\.](?:\d+x\d+|s\d+[._-]?ep?\d+))|\[?\s*(\d+)x\d+\s*\]?|s(?:season ?)?(\d+)e(?:pisode ?)?\d+|season (\d+)/i', $name, $matches)) {
             return $set_season($matches);
         } else {
             return 0;
@@ -182,7 +182,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             return null;
         };
         
-        if (preg_match('/\d+(\d{2})(?!\d|[\s\.](?:\d+x\d+|s\d[._-]?+ep?\d+))|\d+x(\d+)|s(?:eason ?)?\d+e(?:pisode ?)?(\d+)|^(\d{1,2})/i', $name, $matches)) {
+        if (preg_match('/\d+(\d{2})(?!\d|[\s\.](?:\d+x\d+|s\d[._-]?+ep?\d+))|\[?\s*\d+x(\d+)\s*\]?|s(?:eason ?)?\d+e(?:pisode ?)?(\d+)|^(\d{1,2})/i', $name, $matches)) {
             return $set_episode($matches);
         } else {
             return 0;
