@@ -261,7 +261,21 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
                     throw new DownloadDispatcher_Exception_UnacceptableContent($source_file);
                 }
                 
+            }
+
+            case 'mkv': {
+                // Verify that the file isn't a fake
+                $safe_source_file = escapeshellarg($source_file);
+                $command = "mkvinfo {$safe_source_file}";
+                DownloadDispatcher_LogEntry::debug($this->log, "Verifying '{$source_file}' contents with command: {$command}");
+                list($code, $output, $error) = DownloadDispatcher_ForegroundTask::execute($command, $source_dir);
+                if ($code != 0) {
+                    DownloadDispatcher_LogEntry::warning($this->log, "Failed to parse contents of '{$source_dir}/{$source_file}'.");
+                    throw new DownloadDispatcher_Exception_UnacceptableContent($source_file);
+                }
+                
             } // continue into the next case
+
             default: {
                 DownloadDispatcher_LogEntry::info($this->log, "Copying '{$source_file}' to '{$destination_dir}'.");
                 $result = copy("{$source_dir}/{$source_file}", "{$destination_dir}/{$source_file}");
