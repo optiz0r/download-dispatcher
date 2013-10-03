@@ -12,23 +12,26 @@ class DownloadDispatcher_Processor {
         $main = DownloadDispatcher_Main::instance();
         $config = $main->config();
         $log    = $main->log();
-        
-        // Find the list of available Sync plugins
-        $sync_plugins = $config->get('sync');
-        foreach ($sync_plugins as $plugin_name) {
-            // Get a list of all the instances of this plugin to be used
-            $instances = $config->get("sync.{$plugin_name}");
-            foreach ($instances as $instance) {
-                try {
-                    $plugin = DownloadDispatcher_Sync_PluginFactory::create($plugin_name, $config, $log, $instance);
-                    $plugin->run();
-                
-                } catch(SihnonFramework_Exception_PluginException $e) {
-                    SihnonFramework_LogEntry::warning($log, $e->getMessage());
+
+
+        if (! $config->get('sync.skip', false)) { 
+            // Find the list of available Sync plugins
+            $sync_plugins = $config->get('sync');
+            foreach ($sync_plugins as $plugin_name) {
+                // Get a list of all the instances of this plugin to be used
+                $instances = $config->get("sync.{$plugin_name}");
+                foreach ($instances as $instance) {
+                    try {
+                        $plugin = DownloadDispatcher_Sync_PluginFactory::create($plugin_name, $config, $log, $instance);
+                        $plugin->run();
+                    
+                    } catch(SihnonFramework_Exception_PluginException $e) {
+                        SihnonFramework_LogEntry::warning($log, $e->getMessage());
+                    }
                 }
             }
         }
-        
+
         // Find the list of available source plugins
         DownloadDispatcher_Source_PluginFactory::scan();
         $source_plugins = $config->get('sources');
