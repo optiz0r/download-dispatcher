@@ -261,7 +261,9 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
                     throw new DownloadDispatcher_Exception_UnacceptableContent($source_file);
                 }
                 
-            }
+                $this->copyOutputFile($type, $source_dir, $source_file, $destination_dir);
+
+            } break;
 
             case 'mkv': {
                 // Verify that the file isn't a fake
@@ -273,20 +275,28 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
                     DownloadDispatcher_LogEntry::warning($this->log, "Failed to parse contents of '{$source_dir}/{$source_file}'.");
                     throw new DownloadDispatcher_Exception_UnacceptableContent($source_file);
                 }
+
+                $this->copyOutputFile($type, $source_dir, $source_file, $destination_dir);
                 
-            } // continue into the next case
+            } break;
 
             default: {
-                DownloadDispatcher_LogEntry::info($this->log, "Copying '{$source_file}' to '{$destination_dir}'.");
-                $result = copy("{$source_dir}/{$source_file}", "{$destination_dir}/{$source_file}");
-                if ( ! $result) {
-                    DownloadDispatcher_LogEntry::warning($this->log, "Failed to copy '{$source_dir}/{$source_file}' to output directory '{$destination_dir}'.");
-                    throw new DownloadDispatcher_Exception_UnprocesseableContent($source_file);
-                }
+                // Accept anything we don't have a check for
+                $this->copyOutputFile($type, $source_dir, $source_file, $destination_dir);
             }
         }
         
         return true;
+    }
+
+    protected function copyOutputFile($type, $source_dir, $source_file, $destination_dir) {
+        DownloadDispatcher_LogEntry::info($this->log, "Copying '{$source_file}' to '{$destination_dir}'.");
+        $result = copy("{$source_dir}/{$source_file}", "{$destination_dir}/{$source_file}");
+        if ( ! $result) {
+            DownloadDispatcher_LogEntry::warning($this->log, "Failed to copy '{$source_dir}/{$source_file}' to output directory '{$destination_dir}'.");
+            throw new DownloadDispatcher_Exception_UnprocesseableContent($source_file);
+        }
+
     }
     
     protected function renameOutput($dir) {
