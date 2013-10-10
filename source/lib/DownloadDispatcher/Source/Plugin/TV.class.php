@@ -300,10 +300,9 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
     }
     
     protected function renameOutput($dir) {
-        $cwd = getcwd();
-        
+        $lib3rdparty = DownloadDispatcher_Lib . '../3rdparty/'; 
         $command = <<<EOSH
-        {$cwd}/3rdparty/tvrenamer/tvrenamer.pl \
+        {$lib3rdparty}tvrenamer/tvrenamer.pl \
             --include_series \
             --nogroup \
             --pad=2 \
