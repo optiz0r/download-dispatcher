@@ -97,14 +97,14 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         }
         
         $normalised_file = $this->normalise($file);
-        if (array_key_exists($normalised_file, $this->output_dir_cache)) {
+        if (array_key_exists('.'.$normalised_file, $this->output_dir_cache)) {
             $season = $this->season($file);
             if (!$season) {
                 $season = $this->season($dir);
             }
             
-            $full_output_dir = "{$this->output_dir}/{$this->output_dir_cache[$normalised_file]}/Season {$season}";
-            
+            $full_output_dir = "{$this->output_dir}/{$this->output_dir_cache['.'.$normalised_file]}/Season {$season}";
+
             if (is_dir($full_output_dir)) {
                 return $full_output_dir;
             }
@@ -132,7 +132,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         foreach ($series_iterator as $series) {
             $series_name = $series->getBasename();
             $normalised_series = $this->normalise($series_name);
-            $this->output_dir_cache[$normalised_series] = $series_name;
+            $this->output_dir_cache['.'.$normalised_series] = $series_name;
         }
         
         // Post-process in any manual directory mappings
@@ -182,7 +182,9 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             return null;
         };
         
-        if (preg_match('/(?:(?:[\s\.](?:19|20)\d{2})?[\s\.])?(?:\d+(\d{2})(?!\d|[\s\.](?:\d+x\d+|s\d[._-]?+ep?\d+))|\[?\s*\d+x(\d+)\s*\]?|s(?:eason ?)?\d+e(?:pisode ?)?(\d+)|^(\d{1,2}))/i', $name, $matches)) {
+        if (preg_match('/(?:(?:[\s\.](?:19|20)\d{2})?[\s\.])?(?:\d+(\d{2})(?!\d|[\s\.](?:\d+x\d+|s\d[._-]?+ep?\d+))|\[?\s*\d+x(\d+)\s*\]?|s(?:eason ?)?\d+e(?:pisode ?)?(\d+))/i', $name, $matches)) {
+            return $set_episode($matches);
+        } elseif (preg_match('/^(\d+))/i', $name, $matches)) {
             return $set_episode($matches);
         } else {
             return 0;
