@@ -136,7 +136,9 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         }
         
         // Post-process in any manual directory mappings
-        $this->output_dir_cache = array_merge($this->output_dir_cache, $this->config->get('sources.TV.output_series_mappings'), array());
+        foreach ($this->config->get('sources.TV.output_series_mappings', array()) as $k => $v) {
+            $this->output_dir_cache['.'.$k] = $v;
+        }
     }
     
     protected function normalise($name) {
