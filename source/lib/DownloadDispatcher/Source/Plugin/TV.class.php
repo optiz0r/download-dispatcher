@@ -62,6 +62,8 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             $this->copyOutput($type, $dir, $file, $full_output_dir);
             
             $this->renameOutput($full_output_dir);
+
+            $this->fetchSubtitles($full_output_dir);
         
             // This file has been dealt with, so no need to look at it in subsequent operations
             $this->markProcessed($dir . '/' . $file);
@@ -147,7 +149,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
             $normalised_name = $matches[1];
         }
         
-        $normalised_name = preg_replace('/[^a-zA-Z0-9]/', ' ', $normalised_name);
+        $normalised_name = preg_replace('/[^a-zA-Z0-9]/', '', $normalised_name);
         $normalised_name = preg_replace('/ +/', ' ', $normalised_name);
         $normalised_name = strtolower($normalised_name);
         $normalised_name = preg_replace('/season \d+( complete)?/', '', $normalised_name);
@@ -186,7 +188,7 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
         
         if (preg_match('/(?:(?:[\s\.](?:19|20)\d{2})?[\s\.])?(?:\d+(\d{2})(?!\d|[\s\.](?:\d+x\d+|s\d[._-]?+ep?\d+))|\[?\s*\d+x(\d+)\s*\]?|s(?:eason ?)?\d+e(?:pisode ?)?(\d+))/i', $name, $matches)) {
             return $set_episode($matches);
-        } elseif (preg_match('/^(\d+))/i', $name, $matches)) {
+        } elseif (preg_match('/^(\d+)/i', $name, $matches)) {
             return $set_episode($matches);
         } else {
             return 0;
@@ -319,6 +321,15 @@ class DownloadDispatcher_Source_Plugin_TV extends DownloadDispatcher_Source_Plug
 EOSH;
 
         DownloadDispatcher_LogEntry::debug($this->log, "Executing tvrenamer command in '{$dir}': {$command}");
+        DownloadDispatcher_ForegroundTask::execute($command, $dir);
+    }
+
+    protected function fetchSubtitles($dir) {
+        $safe_dir = escapeshellarg($dir);
+        $command = <<<EOSH
+        /usr/bin/subliminal download -Z -l en ${safe_dir}
+EOSH;
+        DownloadDispatcher_LogEntry::debug($this->log, "Executing subliminal command in '{$dir}': {$command}");
         DownloadDispatcher_ForegroundTask::execute($command, $dir);
     }
     
